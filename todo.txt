@@ -1,0 +1,3 @@
+ryk sidste level 2 øvelse grundet sværhedsgrad
+lav flere kardinalitets øvelser
+lav flere projection øvelser / select / mapping to DTO
