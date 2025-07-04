@@ -43,7 +43,7 @@ public class EfExercisesTests
     public async Task Exercise1_GetEmployeesByDepartment_ShouldReturnCorrectEmployees()
     {
         // Act
-        var result = await _exercises.GetEmployeesByDepartmentAsync("Engineering");
+        var result =  _exercises.GetEmployeesByDepartmentAsync("Engineering");
 
         // Assert
         await Assert.That(result).HasCount().EqualTo(3);
@@ -58,7 +58,7 @@ public class EfExercisesTests
     public async Task Exercise2_GetTotalSalaryByDepartment_ShouldReturnCorrectSum()
     {
         // Act
-        var result = await _exercises.GetTotalSalaryByDepartmentAsync("Engineering");
+        var result =  _exercises.GetTotalSalaryByDepartmentAsync("Engineering");
 
         // Assert - John (75000) + Jane (85000) + Frank (90000) = 250000
         await Assert.That(result).IsEqualTo(250000);
@@ -68,7 +68,7 @@ public class EfExercisesTests
     public async Task Exercise3_GetEmployeesWithSalaryAbove_ShouldReturnCorrectEmployees()
     {
         // Act
-        var result = await _exercises.GetEmployeesWithSalaryAboveAsync(70000);
+        var result =  _exercises.GetEmployeesWithSalaryAboveAsync(70000);
 
         // Assert - Jane (85000), Diana (80000), Frank (90000), John (75000)
         await Assert.That(result).HasCount().EqualTo(4);
@@ -84,7 +84,7 @@ public class EfExercisesTests
     public async Task Exercise4_GetEmployeesByHireYear_ShouldReturnCorrectEmployees()
     {
         // Act
-        var result = await _exercises.GetEmployeesByHireYearAsync(2020);
+        var result =  _exercises.GetEmployeesByHireYearAsync(2020);
 
         // Assert - John (2020-01-15), Alice (2020-08-25)
         await Assert.That(result).HasCount().EqualTo(2);
@@ -98,7 +98,7 @@ public class EfExercisesTests
     public async Task Exercise5_GetDepartmentWithHighestBudget_ShouldReturnEngineeringDepartment()
     {
         // Act
-        var result = await _exercises.GetDepartmentWithHighestBudgetAsync();
+        var result =  _exercises.GetDepartmentWithHighestBudgetAsync();
 
         // Assert - Engineering has budget of 500000 (highest)
         await Assert.That(result).IsNotNull();
@@ -110,7 +110,7 @@ public class EfExercisesTests
     public async Task Exercise1_GetEmployeesByDepartment_NonExistentDepartment_ShouldReturnEmpty()
     {
         // Act
-        var result = await _exercises.GetEmployeesByDepartmentAsync("NonExistent");
+        var result =  _exercises.GetEmployeesByDepartmentAsync("NonExistent");
 
         // Assert
         await Assert.That(result).HasCount().EqualTo(0);
@@ -120,7 +120,7 @@ public class EfExercisesTests
     public async Task Exercise3_GetEmployeesWithSalaryAbove_VeryHighSalary_ShouldReturnEmpty()
     {
         // Act
-        var result = await _exercises.GetEmployeesWithSalaryAboveAsync(100000);
+        var result =  _exercises.GetEmployeesWithSalaryAboveAsync(100000);
 
         // Assert
         await Assert.That(result).HasCount().EqualTo(0);

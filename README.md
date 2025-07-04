@@ -23,13 +23,14 @@ The project uses a simple company database with:
 
 1. **Clone and Setup**:
    ```bash
-   cd server/ef-exercises
-   dotnet restore
+   cd ef-exercises
+   dotnet build
    ```
 
 2. **Run Tests** (they should fail initially):
    ```bash
-   dotnet run -c Release
+   #while inside ef-exercises directory
+   dotnet test
    ```
 
 3. **Implement Exercises**:

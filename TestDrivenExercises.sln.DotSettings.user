@@ -1,0 +1,6 @@
+﻿<wpf:ResourceDictionary xml:space="preserve" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:s="clr-namespace:System;assembly=mscorlib" xmlns:ss="urn:shemas-jetbrains-com:settings-storage-xaml" xmlns:wpf="http://schemas.microsoft.com/winfx/2006/xaml/presentation">
+	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=a53dbf2f_002Dee91_002D466a_002D9317_002D93a0a93e1235/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" IsActive="True" Name="Exercise2_GetTotalSalaryByDepartment_ShouldReturnCorrectSum" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;
+  &lt;TestAncestor&gt;
+    &lt;TestId&gt;Testing Platform::D2E56C0C-6302-46BE-BC09-6C37B1EAB088::net9.0::EfExercisesTests&lt;/TestId&gt;
+  &lt;/TestAncestor&gt;
+&lt;/SessionState&gt;</s:String></wpf:ResourceDictionary>

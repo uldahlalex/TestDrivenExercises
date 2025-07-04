@@ -1,5 +1,7 @@
 using EfExercises.Data;
 using EfExercises.Entities;
+using Microsoft.EntityFrameworkCore;
+using SQLitePCL;
 
 namespace EfExercises.Exercises;
 
@@ -12,39 +14,30 @@ public class EfExercisesStub : IEfExercises
         _context = context;
     }
 
-    public Task<List<Employee>> GetEmployeesByDepartmentAsync(string departmentName)
+    public  List<Employee> GetEmployeesByDepartmentAsync(string departmentName)
     {
-        // TODO: Implement this method
-        // Hint: Use Include() to load the Department navigation property
-        // Filter by department name and return the employees
-        throw new NotImplementedException("Exercise 1 not implemented yet");
+        return   _context.Employees.Where(e => e.Department.Name.Equals(departmentName)).ToList();
     }
 
-    public Task<double> GetTotalSalaryByDepartmentAsync(string departmentName)
+    public double GetTotalSalaryByDepartmentAsync(string departmentName)
     {
-        // TODO: Implement this method
-        // Hint: Join employees with departments, filter by department name, and sum salaries
-        throw new NotImplementedException("Exercise 2 not implemented yet");
+        var employees =  _context.Employees.Where(e => e.Department.Name.Equals(departmentName));
+        var result = employees.Sum(e => e.Salary);
+        return result;
     }
 
-    public Task<List<Employee>> GetEmployeesWithSalaryAboveAsync(double minSalary)
+    public List<Employee> GetEmployeesWithSalaryAboveAsync(double minSalary)
     {
-        // TODO: Implement this method
-        // Hint: Use Where() to filter employees by salary and Include() to load Department
-        throw new NotImplementedException("Exercise 3 not implemented yet");
+        return _context.Employees.Where(e => e.Salary > minSalary).ToList();
     }
 
-    public Task<List<Employee>> GetEmployeesByHireYearAsync(int year)
+    public List<Employee> GetEmployeesByHireYearAsync(int year)
     {
-        // TODO: Implement this method
-        // Hint: Use Where() with DateTime.Year property to filter by hire year
-        throw new NotImplementedException("Exercise 4 not implemented yet");
+        return _context.Employees.Where(e => e.HireDate.Year == year).ToList();
     }
 
-    public Task<Department?> GetDepartmentWithHighestBudgetAsync()
+    public Department GetDepartmentWithHighestBudgetAsync()
     {
-        // TODO: Implement this method
-        // Hint: Use OrderByDescending() and FirstOrDefaultAsync()
-        throw new NotImplementedException("Exercise 5 not implemented yet");
+        return _context.Departments.OrderByDescending(d => d.Budget).First();
     }
 }

@@ -13,41 +13,30 @@ public class EfExercisesSolution : IEfExercises
         _context = context;
     }
 
-    public async Task<List<Employee>> GetEmployeesByDepartmentAsync(string departmentName)
+    public  List<Employee> GetEmployeesByDepartmentAsync(string departmentName)
     {
-        return await _context.Employees
-            .Include(e => e.Department)
-            .Where(e => e.Department.Name == departmentName)
-            .ToListAsync();
+        return   _context.Employees.Where(e => e.Department.Name.Equals(departmentName)).ToList();
     }
 
-    public async Task<double> GetTotalSalaryByDepartmentAsync(string departmentName)
+    public double GetTotalSalaryByDepartmentAsync(string departmentName)
     {
-        return await _context.Employees
-            .Where(e => e.Department.Name == departmentName)
-            .SumAsync(e => e.Salary);
+        var employees =  _context.Employees.Where(e => e.Department.Name.Equals(departmentName));
+        var result = employees.Sum(e => e.Salary);
+        return result;
     }
 
-    public async Task<List<Employee>> GetEmployeesWithSalaryAboveAsync(double minSalary)
+    public List<Employee> GetEmployeesWithSalaryAboveAsync(double minSalary)
     {
-        return await _context.Employees
-            .Include(e => e.Department)
-            .Where(e => e.Salary > minSalary)
-            .ToListAsync();
+        return _context.Employees.Where(e => e.Salary > minSalary).ToList();
     }
 
-    public async Task<List<Employee>> GetEmployeesByHireYearAsync(int year)
+    public List<Employee> GetEmployeesByHireYearAsync(int year)
     {
-        return await _context.Employees
-            .Include(e => e.Department)
-            .Where(e => e.HireDate.Year == year)
-            .ToListAsync();
+        return _context.Employees.Where(e => e.HireDate.Year == year).ToList();
     }
 
-    public async Task<Department?> GetDepartmentWithHighestBudgetAsync()
+    public Department GetDepartmentWithHighestBudgetAsync()
     {
-        return await _context.Departments
-            .OrderByDescending(d => d.Budget)
-            .FirstOrDefaultAsync();
+        return _context.Departments.OrderByDescending(d => d.Budget).First();
     }
 }
