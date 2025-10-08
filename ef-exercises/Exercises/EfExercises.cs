@@ -3,7 +3,6 @@ using System.Text.Json.Serialization;
 using EfExercises.Data;
 using EfExercises.Entities;
 using Microsoft.EntityFrameworkCore;
-using SQLitePCL;
 
 namespace EfExercises.Exercises;
 
@@ -18,27 +17,30 @@ public class EfExercises : IEfExercises
 
     public List<Employee> GetEmployeesByDepartment(string departmentName)
     {
-        throw new NotImplementedException();
+        return _context.Employees.Where(e => e.Department.Name.Equals(departmentName)).ToList();
     }
 
     public double GetTotalSalaryByDepartment(string departmentName)
     {
-        throw new NotImplementedException();
+        return _context.Employees
+            .Where(e => e.Department.Name.Equals(departmentName))
+            .Select(e => e.Salary)
+            .Sum();
     }
 
     public List<Employee> GetEmployeesWithSalaryAbove(double minSalary)
     {
-        throw new NotImplementedException();
+        return _context.Employees.Where(e => e.Salary > minSalary).ToList();
     }
 
     public List<Employee> GetEmployeesByHireYear(int year)
     {
-        throw new NotImplementedException();
+        return _context.Employees.Where(e => e.HireDate.Year == year).ToList();
     }
 
     public Department GetDepartmentWithHighestBudget()
     {
-        throw new NotImplementedException();
+        return _context.Departments.OrderByDescending(d => d.Budget).First();
     }
 
  

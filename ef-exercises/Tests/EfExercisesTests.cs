@@ -1,172 +1,139 @@
 using EfExercises.Data;
 using EfExercises.Exercises;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
-using TUnit.Assertions;
-using TUnit.Core;
 
-namespace EfExercises.Tests;
+namespace tests.Tests;
 
-public class EfExercisesTests
+public class EfExercisesTests(CompanyDbContext _context, IEfExercises _exercises)
 {
-    private CompanyDbContext _context = null!;
-    private IEfExercises _exercises = null!;
+    
 
-    [Before(Test)]
-    public async Task SetUp()
-    {
-        // Create in-memory SQLite database
-        var options = new DbContextOptionsBuilder<CompanyDbContext>()
-            .UseSqlite("Data Source=:memory:")
-            .Options;
-        // Enable the logger for tests
-
-        _context = new CompanyDbContext(options);
-        await _context.Database.OpenConnectionAsync();
-        
-        // Seed test data
-        await SeedData.SeedAsync(_context);
-
-        // Switch between stub and solution implementations
-        // Use EfExercisesStub for students to implement
-        // Use EfExercisesSolution to verify tests pass
-        _exercises = new Exercises.EfExercises(_context);
-        // _exercises = new EfExercisesSolution(_context);
-    }
-
-    [After(Test)]
-    public async Task TearDown()
-    {
-        await _context.Database.CloseConnectionAsync();
-        await _context.DisposeAsync();
-    }
-
-    [Test]
-    public async Task Exercise1_GetEmployeesByDepartment_ShouldReturnCorrectEmployees()
+    [Fact]
+    public void Exercise1_GetEmployeesByDepartment_ShouldReturnCorrectEmployees()
     {
         // Act
         var result = _exercises.GetEmployeesByDepartment("Engineering");
 
         // Assert
-        await Assert.That(result).HasCount().EqualTo(3);
+        Assert.Equal(3, result.Count());
         var firstNames = result.Select(e => e.FirstName).ToList();
-        await Assert.That(firstNames.Contains("John")).IsTrue();
-        await Assert.That(firstNames.Contains("Jane")).IsTrue();
-        await Assert.That(firstNames.Contains("Frank")).IsTrue();
-        await Assert.That(result.All(e => e.Department.Name == "Engineering")).IsTrue();
+        Assert.Contains("John", firstNames);
+        Assert.Contains("Jane", firstNames);
+        Assert.Contains("Frank", firstNames);
+        Assert.All(result, e => Assert.Equal("Engineering", e.Department.Name));
     }
 
-    [Test]
-    public async Task Exercise2_GetTotalSalaryByDepartment_ShouldReturnCorrectSum()
+    [Fact]
+    public void Exercise2_GetTotalSalaryByDepartment_ShouldReturnCorrectSum()
     {
         // Act
         var result = _exercises.GetTotalSalaryByDepartment("Engineering");
 
         // Assert - John (75000) + Jane (85000) + Frank (90000) = 250000
-        await Assert.That(result).IsEqualTo(250000);
+        Assert.Equal(250000, result);
     }
 
-    [Test]
-    public async Task Exercise3_GetEmployeesWithSalaryAbove_ShouldReturnCorrectEmployees()
+    [Fact]
+    public void Exercise3_GetEmployeesWithSalaryAbove_ShouldReturnCorrectEmployees()
     {
         // Act
         var result = _exercises.GetEmployeesWithSalaryAbove(70000);
 
         // Assert - Jane (85000), Diana (80000), Frank (90000), John (75000)
-        await Assert.That(result).HasCount().EqualTo(4);
-        await Assert.That(result.All(e => e.Salary > 70000)).IsTrue();
+        Assert.Equal(4, result.Count());
+        Assert.All(result, e => Assert.True(e.Salary > 70000));
         var firstNames = result.Select(e => e.FirstName).ToList();
-        await Assert.That(firstNames.Contains("Jane")).IsTrue();
-        await Assert.That(firstNames.Contains("Diana")).IsTrue();
-        await Assert.That(firstNames.Contains("Frank")).IsTrue();
-        await Assert.That(firstNames.Contains("John")).IsTrue();
+        Assert.Contains("Jane", firstNames);
+        Assert.Contains("Diana", firstNames);
+        Assert.Contains("Frank", firstNames);
+        Assert.Contains("John", firstNames);
     }
 
-    [Test]
-    public async Task Exercise4_GetEmployeesByHireYear_ShouldReturnCorrectEmployees()
+    [Fact]
+    public void Exercise4_GetEmployeesByHireYear_ShouldReturnCorrectEmployees()
     {
         // Act
         var result = _exercises.GetEmployeesByHireYear(2020);
 
         // Assert - John (2020-01-15), Alice (2020-08-25)
-        await Assert.That(result).HasCount().EqualTo(2);
+        Assert.Equal(2, result.Count());
         var firstNames = result.Select(e => e.FirstName).ToList();
-        await Assert.That(firstNames.Contains("John")).IsTrue();
-        await Assert.That(firstNames.Contains("Alice")).IsTrue();
-        await Assert.That(result.All(e => e.HireDate.Year == 2020)).IsTrue();
+        Assert.Contains("John", firstNames);
+        Assert.Contains("Alice", firstNames);
+        Assert.All(result, e => Assert.Equal(2020, e.HireDate.Year));
     }
 
-    [Test]
-    public async Task Exercise5_GetDepartmentWithHighestBudget_ShouldReturnEngineeringDepartment()
+    [Fact]
+    public void Exercise5_GetDepartmentWithHighestBudget_ShouldReturnEngineeringDepartment()
     {
         // Act
         var result = _exercises.GetDepartmentWithHighestBudget();
 
         // Assert - Engineering has budget of 500000 (highest)
-        await Assert.That(result).IsNotNull();
-        await Assert.That(result!.Name).IsEqualTo("Engineering");
-        await Assert.That(result.Budget).IsEqualTo(500000);
+        Assert.NotNull(result);
+        Assert.Equal("Engineering", result!.Name);
+        Assert.Equal(500000, result.Budget);
     }
 
-    [Test]
-    public async Task Exercise1_GetEmployeesByDepartment_NonExistentDepartment_ShouldReturnEmpty()
+    [Fact]
+    public void Exercise1_GetEmployeesByDepartment_NonExistentDepartment_ShouldReturnEmpty()
     {
         // Act
         var result = _exercises.GetEmployeesByDepartment("NonExistent");
 
         // Assert
-        await Assert.That(result).HasCount().EqualTo(0);
+        Assert.Empty(result);
     }
 
-    [Test]
-    public async Task Exercise3_GetEmployeesWithSalaryAbove_VeryHighSalary_ShouldReturnEmpty()
+    [Fact]
+    public void Exercise3_GetEmployeesWithSalaryAbove_VeryHighSalary_ShouldReturnEmpty()
     {
         // Act
         var result = _exercises.GetEmployeesWithSalaryAbove(100000);
 
         // Assert
-        await Assert.That(result).HasCount().EqualTo(0);
+        Assert.Empty(result);
     }
 
     // Level 2 Tests - Slightly harder exercises
 
-    
-    [Test]
-    public async Task Exercise8_GetEmployeesHiredBetween_ShouldReturnCorrectEmployees()
+
+    [Fact]
+    public void Exercise8_GetEmployeesHiredBetween_ShouldReturnCorrectEmployees()
     {
         // Act
-        var result = _exercises.GetEmployeesHiredBetween(new DateTime(2020, 1, 1), new DateTime(2020, 12, 31));
+        var result = _exercises.GetEmployeesHiredBetween(new DateTime(2020, 1, 1, 0, 0, 0, DateTimeKind.Utc), new DateTime(2020, 12, 31, 0, 0, 0, DateTimeKind.Utc));
 
         // Assert - John (2020-01-15) and Alice (2020-08-25)
-        await Assert.That(result).HasCount().EqualTo(2);
-        await Assert.That(result.All(e => e.HireDate.Year == 2020)).IsTrue();
+        Assert.Equal(2, result.Count());
+        Assert.All(result, e => Assert.Equal(2020, e.HireDate.Year));
         // Should be ordered by hire date
-        await Assert.That(result.First().FirstName).IsEqualTo("John"); // 2020-01-15
-        await Assert.That(result.Last().FirstName).IsEqualTo("Alice"); // 2020-08-25
+        Assert.Equal("John", result.First().FirstName); // 2020-01-15
+        Assert.Equal("Alice", result.Last().FirstName); // 2020-08-25
     }
 
-    [Test]
-    public async Task Exercise9_GetTopNHighestPaidEmployees_ShouldReturnCorrectEmployees()
+    [Fact]
+    public void Exercise9_GetTopNHighestPaidEmployees_ShouldReturnCorrectEmployees()
     {
         // Act
         var result = _exercises.GetTopNHighestPaidEmployees(3);
 
         // Assert - Top 3: Frank (90000), Jane (85000), Diana (80000)
-        await Assert.That(result).HasCount().EqualTo(3);
-        await Assert.That(result.First().FirstName).IsEqualTo("Frank"); // 90000
-        await Assert.That(result.Skip(1).First().FirstName).IsEqualTo("Jane"); // 85000
-        await Assert.That(result.Last().FirstName).IsEqualTo("Diana"); // 80000
+        Assert.Equal(3, result.Count());
+        Assert.Equal("Frank", result.First().FirstName); // 90000
+        Assert.Equal("Jane", result.Skip(1).First().FirstName); // 85000
+        Assert.Equal("Diana", result.Last().FirstName); // 80000
     }
 
-    [Test]
-    public async Task Exercise10_GetDepartmentsWithAverageSalaryAbove_ShouldReturnCorrectDepartments()
+    [Fact]
+    public void Exercise10_GetDepartmentsWithAverageSalaryAbove_ShouldReturnCorrectDepartments()
     {
         // Act
         var result = _exercises.GetDepartmentsWithAverageSalaryAbove(70000);
 
         // Assert - Engineering avg: 83333.33, Sales avg: 70000, Marketing avg: 67500
         // Only Engineering should be above 70000
-        await Assert.That(result).HasCount().EqualTo(1);
-         await Assert.That(result.First().Name).IsEqualTo("Engineering");
+        Assert.Single(result);
+        Assert.Equal("Engineering", result.First().Name);
     }
 }

@@ -6,8 +6,8 @@ This is a test-driven development (TDD) project designed to help students learn 
 
 - **Entities/**: Contains the database entities (Employee, Department, Project)
 - **Data/**: Contains the DbContext and seed data
-- **Exercises/**: Contains the exercise interface, stub implementation, and solution
-- **Tests/**: Contains the TUnit tests that validate the exercises
+- **Exercises/**: Contains the exercise interface and implementation
+- **Tests/**: Contains the XUnit tests that validate the exercises
 
 ## Database Schema
 
@@ -17,9 +17,12 @@ The project uses a simple company database with:
 - **Projects**: Company projects with budgets and timelines
 - **Many-to-Many**: Employees can work on multiple projects
 
-## How to Use
+## Prerequisites
 
-### For Students (Learning Mode)
+- **.NET 9.0 SDK** (or compatible version)
+- **Docker** - Required for running PostgreSQL test containers
+
+## How to Use
 
 1. **Clone and Setup**:
    ```bash
@@ -27,43 +30,51 @@ The project uses a simple company database with:
    dotnet build
    ```
 
-2. **Run Tests** (they should fail initially):
+2. **Run Tests**:
    ```bash
-   #while inside ef-exercises directory
    dotnet test
    ```
 
-3. **Implement Exercises**:
-   - Open `Exercises/EfExercisesStub.cs`
-   - Implement each method to make the tests pass
-   - Use the hints in the comments
+   Note: Tests use XUnit.DependencyInjection for dependency injection and Testcontainers for PostgreSQL, so Docker must be running.
 
-4. **Verify Your Work**:
-   - Run tests after each implementation
-   - All tests should pass when correctly implemented
-   - Tests with `NotImplementedException` will fail until you implement them
+## Exercises
 
-### For Instructors (Solution Mode)
+### Level 1 - Basic Queries
+1. **GetEmployeesByDepartment**: Find all employees in a specific department
+2. **GetTotalSalaryByDepartment**: Calculate total salary expense for a department
+3. **GetEmployeesWithSalaryAbove**: Find employees earning above a threshold
+4. **GetEmployeesByHireYear**: Find employees hired in a specific year
+5. **GetDepartmentWithHighestBudget**: Find the department with the largest budget
 
-1. **Switch to Solutions**:
-   - In `Tests/EfExercisesTests.cs`, comment out the stub line and uncomment the solution line:
-   ```csharp
-   // _exercises = new EfExercisesStub(_context);
-   _exercises = new EfExercisesSolution(_context);
-   ```
+### Level 2 - Advanced Queries
+8. **GetEmployeesHiredBetween**: Find employees hired within a date range
+9. **GetTopNHighestPaidEmployees**: Get the N highest paid employees
+10. **GetDepartmentsWithAverageSalaryAbove**: Find departments with average salary above threshold
 
-2. **Verify Tests Pass**:
-   ```bash
-   dotnet run -c Release
-   ```
+### Level 3 - Hard (Cardinality & Updates)
+11. **AssignEmployeeToProject**: Add employee to project (many-to-many add)
+12. **RemoveEmployeeFromProject**: Remove employee from project (many-to-many remove)
+13. **TransferEmployeeToDepartment**: Move employee to different department (one-to-many update)
+14. **ReplaceProjectEmployees**: Replace all employees on a project with new set
+15. **GetEmployeeProjects**: Get all projects an employee is assigned to
+16. **GetProjectEmployees**: Get all employees working on a specific project
+17. **AssignMultipleEmployeesToProject**: Bulk assign employees to a project
+18. **GetEmployeesWithoutProjects**: Find employees not assigned to any project
+19. **GetProjectsWithoutEmployees**: Find projects with no employee assignments
+20. **TransferEmployeeAndAssignProject**: Update department and assign project in one transaction
 
-## The 5 Exercises
+### Level 4 - Idempotent Updates with DTOs
+21. **UpdateEmployee**: Update employee to desired state (scalar properties, department transfer, project assignments)
+22. **UpdateProject**: Update project to desired state (scalar properties, nullable fields, employee assignments)
+23. **UpdateDepartment**: Update department to desired state (scalar properties, employee transfers)
 
-1. **GetEmployeesByDepartmentAsync**: Find all employees in a specific department
-2. **GetTotalSalaryByDepartmentAsync**: Calculate total salary expense for a department
-3. **GetEmployeesWithSalaryAboveAsync**: Find employees earning above a threshold
-4. **GetEmployeesByHireYearAsync**: Find employees hired in a specific year
-5. **GetDepartmentWithHighestBudgetAsync**: Find the department with the largest budget
+This level focuses on:
+- **Idempotent operations**: Same input produces same result when called multiple times
+- **DTO-driven updates**: Use request DTOs to specify desired end state
+- **Partial updates**: Only update fields specified in DTO
+- **Complex state management**: Handle one-to-many and many-to-many relationships correctly
+- **Proper change tracking**: Understanding how EF Core tracks entity state changes
+- **Navigation property handling**: Correctly loading and updating related entities
 
 ## Learning Objectives
 
@@ -71,17 +82,19 @@ Students will learn:
 - Entity Framework Core query syntax
 - LINQ operations (Where, Select, Include, Sum, OrderBy)
 - Navigation properties and relationships
-- Async/await patterns
+- Understanding and working with cardinalities (one-to-many, many-to-many)
+- Entity state management and change tracking
+- Proper handling of relationship updates
 - Database querying best practices
 
 ## Features
 
-- **SQLite In-Memory Database**: Fast setup, no external dependencies
+- **PostgreSQL Test Containers**: Realistic database environment using Docker
+- **XUnit with Dependency Injection**: Modern test setup with XUnit.DependencyInjection
 - **Automatic Seed Data**: Consistent test data for all exercises
 - **Progressive Difficulty**: Exercises build from simple to more complex
 - **Comprehensive Tests**: Edge cases and validation included
-- **Switch Between Modes**: Easy toggle between student and solution implementations
-- **Standard TUnit Testing**: Use familiar test runner commands and IDE integration
+- **UTC DateTime Handling**: Proper timezone handling for PostgreSQL compatibility
 
 ## Sample Data
 
