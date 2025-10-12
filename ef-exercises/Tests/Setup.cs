@@ -26,7 +26,6 @@ public class Startup
             return ctx;
         });
         services.AddScoped<IEfExercises, EfExercises>();
-        services.AddScoped<IEfExercisesHard, EfExercisesHard>();
         services.AddScoped<IEfExercisesIdempotentUpdates, EfExercisesIdempotentUpdates>();
     }
 }

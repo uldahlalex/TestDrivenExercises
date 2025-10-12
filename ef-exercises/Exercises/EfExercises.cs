@@ -8,62 +8,56 @@ using tests.Interfaces;
 
 namespace tests.Exercises;
 
-public class EfExercises : IEfExercises
+public class EfExercises(CompanyDbContext context) : IEfExercises
 {
-    private readonly CompanyDbContext _context;
-
-    public EfExercises(CompanyDbContext context)
+    public async Task<List<Employee>> GetEmployeesByDepartment(string departmentName)
     {
-        _context = context;
+        return await context.Employees.Where(e => e.Department.Name.Equals(departmentName)).ToListAsync();
     }
 
-    public List<Employee> GetEmployeesByDepartment(string departmentName)
+    public async Task<double> GetTotalSalaryByDepartment(string departmentName)
     {
-        return _context.Employees.Where(e => e.Department.Name.Equals(departmentName)).ToList();
-    }
-
-    public double GetTotalSalaryByDepartment(string departmentName)
-    {
-        return _context.Employees
+        return await context.Employees
             .Where(e => e.Department.Name.Equals(departmentName))
             .Select(e => e.Salary)
-            .Sum();
+            .SumAsync();
     }
 
-    public List<Employee> GetEmployeesWithSalaryAbove(double minSalary)
+    public async Task<List<Employee>> GetEmployeesWithSalaryAbove(double minSalary)
     {
-        return _context.Employees.Where(e => e.Salary > minSalary).ToList();
+        return await context.Employees.Where(e => e.Salary > minSalary).ToListAsync();
     }
 
-    public List<Employee> GetEmployeesByHireYear(int year)
+    public async Task<List<Employee>> GetEmployeesByHireYear(int year)
     {
-        return _context.Employees.Where(e => e.HireDate.Year == year).ToList();
+        return await context.Employees.Where(e => e.HireDate.Year == year).ToListAsync();
     }
 
-    public Department GetDepartmentWithHighestBudget()
+    public async Task<Department> GetDepartmentWithHighestBudget()
     {
-        return _context.Departments.OrderByDescending(d => d.Budget).First();
+        return await context.Departments.OrderByDescending(d => d.Budget).FirstAsync();
     }
 
- 
-    public List<Employee> GetEmployeesHiredBetween(DateTime startDate, DateTime endDate)
+
+    public async Task<List<Employee>> GetEmployeesHiredBetween(DateTime startDate, DateTime endDate)
     {
-        return _context.Employees.Where(e => e.HireDate > startDate && e.HireDate < endDate).ToList();
+        return await context.Employees.Where(e => e.HireDate > startDate && e.HireDate < endDate).ToListAsync();
     }
 
-    public List<Employee> GetTopNHighestPaidEmployees(int count)
+    public async Task<List<Employee>> GetTopNHighestPaidEmployees(int count)
     {
-        return _context.Employees.OrderByDescending(e => e.Salary).Take(count).ToList();
+        return await context.Employees.OrderByDescending(e => e.Salary).Take(count).ToListAsync();
     }
 
-    public List<Department> GetDepartmentsWithAverageSalaryAbove(double minAverageSalary)
+    public async Task<List<Department>> GetDepartmentsWithAverageSalaryAbove(double minAverageSalary)
     {
-        _context.Employees.Select(e =>
+        return await context.Departments.Select(d =>
                 new
                 {
-                    dept = e.Department,
-                    sum = e.Department.Employees.Select(e => e.Salary).Sum()
-                }).Where(r => r.sum > minAverageSalary)
-            .Select(e => e.dept).ToList();
+                    dept = d,
+                    empAvgSalary = d.Employees.Sum(e => e.Salary) / d.Employees.Count,
+                }).Where(d => d.empAvgSalary > minAverageSalary)
+            .Select(d => d.dept)
+            .ToListAsync();
     }
 }
