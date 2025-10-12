@@ -1,9 +1,10 @@
 using System.Text.Json;
-using EfExercises.Data;
-using EfExercises.Entities;
 using Microsoft.EntityFrameworkCore;
+using tests.Data;
+using tests.Entities;
+using tests.Interfaces;
 
-namespace EfExercises.Exercises;
+namespace tests.Solutions;
 
 public class EfExercisesSolution : IEfExercises
 {

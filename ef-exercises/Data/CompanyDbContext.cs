@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
-using EfExercises.Entities;
+using tests.Entities;
 
-namespace EfExercises.Data;
+namespace tests.Data;
 
 public class CompanyDbContext : DbContext
 {

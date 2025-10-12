@@ -1,8 +1,7 @@
-using EfExercises.Data;
-using EfExercises.Exercises;
-using Microsoft.EntityFrameworkCore;
+using tests.Data;
+using tests.Interfaces;
 
-namespace tests.Tests;
+namespace tests.Tests.EfExercisesTests;
 
 public class EfExercisesTests(CompanyDbContext _context, IEfExercises _exercises)
 {

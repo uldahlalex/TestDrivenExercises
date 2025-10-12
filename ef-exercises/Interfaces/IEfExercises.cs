@@ -1,6 +1,6 @@
-using EfExercises.Entities;
+using tests.Entities;
 
-namespace EfExercises.Exercises;
+namespace tests.Interfaces;
 
 public interface IEfExercises
 {

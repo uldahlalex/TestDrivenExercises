@@ -1,6 +1,6 @@
-using EfExercises.Entities;
+using tests.Entities;
 
-namespace EfExercises.Data;
+namespace tests.Data;
 
 public static class SeedData
 {

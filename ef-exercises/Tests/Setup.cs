@@ -1,10 +1,11 @@
-using EfExercises.Data;
-using EfExercises.Exercises;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Testcontainers.PostgreSql;
+using tests.Data;
+using tests.Exercises;
+using tests.Interfaces;
 
-namespace tests;
+namespace tests.Tests;
 
 public class Startup
 {
@@ -24,8 +25,8 @@ public class Startup
             SeedData.SeedAsync(ctx).GetAwaiter().GetResult();
             return ctx;
         });
-        services.AddScoped<IEfExercises, EfExercises.Exercises.EfExercises>();
+        services.AddScoped<IEfExercises, EfExercises>();
         services.AddScoped<IEfExercisesHard, EfExercisesHard>();
-        services.AddScoped<IEfExercisesIdempotentUpdates, EfExercisesIdempotentUpdatesSolutions>();
+        services.AddScoped<IEfExercisesIdempotentUpdates, EfExercisesIdempotentUpdates>();
     }
 }

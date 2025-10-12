@@ -1,4 +1,4 @@
-namespace EfExercises.Entities;
+namespace tests.Entities;
 
 public class Project
 {

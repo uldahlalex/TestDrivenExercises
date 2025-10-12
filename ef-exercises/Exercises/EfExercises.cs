@@ -1,10 +1,12 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using EfExercises.Data;
-using EfExercises.Entities;
+using Docker.DotNet.Models;
 using Microsoft.EntityFrameworkCore;
+using tests.Data;
+using tests.Entities;
+using tests.Interfaces;
 
-namespace EfExercises.Exercises;
+namespace tests.Exercises;
 
 public class EfExercises : IEfExercises
 {
@@ -56,16 +58,12 @@ public class EfExercises : IEfExercises
 
     public List<Department> GetDepartmentsWithAverageSalaryAbove(double minAverageSalary)
     {
-        var deptWithAvgSalary = _context.Departments.Include(d => d.Employees)
-            .Select(d => new {dept = d, avgSalary = (d.Employees.Sum(e => e.Salary) / d.Employees.Count) });
-        foreach (var VARIABLE in deptWithAvgSalary)
-        {
-            Console.WriteLine(JsonSerializer.Serialize(VARIABLE, new JsonSerializerOptions()
-            {
-                ReferenceHandler = ReferenceHandler.IgnoreCycles
-            }));
-
-        }
-        return deptWithAvgSalary.Where(d => d.avgSalary > minAverageSalary).Select(d => d.dept).ToList();
+        _context.Employees.Select(e =>
+                new
+                {
+                    dept = e.Department,
+                    sum = e.Department.Employees.Select(e => e.Salary).Sum()
+                }).Where(r => r.sum > minAverageSalary)
+            .Select(e => e.dept).ToList();
     }
 }

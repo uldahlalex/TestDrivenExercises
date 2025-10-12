@@ -1,7 +1,7 @@
-using EfExercises.DTOs;
-using EfExercises.Entities;
+using tests.DTOs;
+using tests.Entities;
 
-namespace EfExercises.Exercises;
+namespace tests.Interfaces;
 
 /// <summary>
 /// Level 4 - Idempotent Updates with DTOs

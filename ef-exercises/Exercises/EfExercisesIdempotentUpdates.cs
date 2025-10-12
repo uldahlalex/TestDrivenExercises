@@ -1,9 +1,10 @@
-using EfExercises.Data;
-using EfExercises.DTOs;
-using EfExercises.Entities;
 using Microsoft.EntityFrameworkCore;
+using tests.Data;
+using tests.DTOs;
+using tests.Entities;
+using tests.Interfaces;
 
-namespace EfExercises.Exercises;
+namespace tests.Exercises;
 
 public class EfExercisesIdempotentUpdates(CompanyDbContext ctx) : IEfExercisesIdempotentUpdates
 {
@@ -15,22 +16,28 @@ public class EfExercisesIdempotentUpdates(CompanyDbContext ctx) : IEfExercisesId
             .ThenInclude(p => p.Employees)
             .First(e => e.Id == dto.Id);
 
-        employee.Department = ctx.Departments.First(d => d.Id == dto.DepartmentId);
-        employee.Projects.Clear();
-        var projects = ctx.Projects.Where(p => dto.ProjectIds.Contains(p.Id));
-        foreach (var project in projects)
-        {
-            employee.Projects.Add(project);
-        }
-        if(dto.Salary!=null)
+
+            employee.Department = ctx.Departments.First(d => d.Id == dto.DepartmentId);
+
+   
+            employee.Projects.Clear();
+            var projects = ctx.Projects.Where(p => dto.ProjectIds.Contains(p.Id));
+            if(dto.ProjectIds.Count != projects.Count())
+                throw new Exception("One or more projects not found");
+            foreach (var project in projects)
+            {
+                if(project == null)
+                    throw new Exception("Project not found");
+            
+                employee.Projects.Add(project);
+            }
+        
+
+    
             employee.Salary = (double)dto.Salary;
-        if (dto.Email != null)
             employee.Email = dto.Email;
-        if (dto.HireDate != null)
             employee.HireDate = (DateTime)dto.HireDate;
-        if (dto.FirstName != null)
             employee.FirstName = dto.FirstName;
-        if (dto.LastName != null)
             employee.LastName = dto.LastName;
         ctx.SaveChanges();
         return employee;
@@ -38,11 +45,62 @@ public class EfExercisesIdempotentUpdates(CompanyDbContext ctx) : IEfExercisesId
 
     public Project UpdateProject(UpdateProjectDto dto)
     {
-        throw new NotImplementedException();
-    }
+        var project = ctx.Projects
+            .Include(p => p.Employees)
+            .ThenInclude(e => e.Department)
+            .First(p => p.Id == dto.Id);
+
+       
+                    project.Employees.Clear();
+                 foreach (var employee in ctx.Employees.Where(e => dto.EmployeeIds.Contains(e.Id)))
+                 {
+                     project.Employees.Add(employee);
+                 }
+
+        
+
+        project.Budget = (double)dto.Budget;
+
+         project.Description = dto.Description;
+            project.Name = dto.Name;
+        project.EndDate = dto.EndDate;
+
+            project.StartDate = dto.StartDate;
+            project.EndDate = dto.EndDate;
+        
+ 
+        ctx.SaveChanges();
+     
+     return project;
+    }   
 
     public Department UpdateDepartment(UpdateDepartmentDto dto)
     {
-        throw new NotImplementedException();
+        var department = ctx.Departments
+            .Include(d => d.Employees)
+            .ThenInclude(e => e.Projects)
+            .First(d => d.Id == dto.Id);
+
+     
+                    var desiredEmployees = ctx.Employees.Where(e => dto.EmployeeIds.Contains(e.Id));
+                       
+                    
+                    if (desiredEmployees.Count() != dto.EmployeeIds.Count)
+                        throw new Exception("One ID does not exist");
+                    department.Employees.Clear();
+                    foreach (var desiredEmployee in desiredEmployees)
+                    {
+                        if (desiredEmployee == null)
+                            throw new Exception("Employee is null");
+                        department.Employees.Add(desiredEmployee);
+                    }
+        
+
+
+            department.Budget = (double)dto.Budget;
+            department.Name = dto.Name;
+            department.Location = dto.Location;
+        ctx.SaveChanges();
+        return department;
     }
 }

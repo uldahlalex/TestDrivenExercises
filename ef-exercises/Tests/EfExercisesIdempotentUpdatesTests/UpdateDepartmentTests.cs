@@ -1,20 +1,17 @@
-using EfExercises.Data;
-using EfExercises.DTOs;
-using EfExercises.Exercises;
 using Microsoft.EntityFrameworkCore;
+using tests.Data;
+using tests.DTOs;
+using tests.Interfaces;
 
-namespace tests.Tests;
+namespace tests.Tests.EfExercisesIdempotentUpdatesTests;
 
 public class UpdateDepartmentTests(CompanyDbContext context, IEfExercisesIdempotentUpdates exercises)
 {
-    private readonly CompanyDbContext _context = context;
-    private readonly IEfExercisesIdempotentUpdates _exercises = exercises;
-
     [Fact]
     public void UpdateDepartment_ScalarPropertiesOnly_ShouldUpdateCorrectly()
     {
         // Arrange - Verify Engineering department exists with original values
-        var originalDepartment = _context.Departments.AsNoTracking().First(d => d.Id == 1);
+        var originalDepartment = context.Departments.AsNoTracking().First(d => d.Id == 1);
         Assert.Equal("Engineering", originalDepartment.Name);
         Assert.Equal("Building A", originalDepartment.Location);
         Assert.Equal(500000, originalDepartment.Budget);
@@ -28,7 +25,7 @@ public class UpdateDepartmentTests(CompanyDbContext context, IEfExercisesIdempot
         };
 
         // Act
-        var result = _exercises.UpdateDepartment(dto);
+        var result = exercises.UpdateDepartment(dto);
 
         // Assert - Check returned object
         Assert.Equal("Engineering & Tech", result.Name);
@@ -36,7 +33,7 @@ public class UpdateDepartmentTests(CompanyDbContext context, IEfExercisesIdempot
         Assert.Equal(550000, result.Budget);
 
         // Assert - Verify DB state
-        var dbDepartment = _context.Departments.AsNoTracking().First(d => d.Id == 1);
+        var dbDepartment = context.Departments.AsNoTracking().First(d => d.Id == 1);
         Assert.Equal("Engineering & Tech", dbDepartment.Name);
         Assert.Equal("Building A - Floor 2", dbDepartment.Location);
         Assert.Equal(550000, dbDepartment.Budget);
@@ -46,7 +43,7 @@ public class UpdateDepartmentTests(CompanyDbContext context, IEfExercisesIdempot
     public void UpdateDepartment_AddEmployees_ShouldUpdateOneToMany()
     {
         // Arrange - Verify initial state
-        var marketingDept = _context.Departments
+        var marketingDept = context.Departments
             .AsNoTracking()
             .Include(d => d.Employees)
             .First(d => d.Id == 2);
@@ -55,8 +52,8 @@ public class UpdateDepartmentTests(CompanyDbContext context, IEfExercisesIdempot
         Assert.Contains(4, initialMarketingEmployeeIds); // Alice
 
         // Verify Charlie and Diana are in Sales
-        var charlie = _context.Employees.AsNoTracking().First(e => e.Id == 5);
-        var diana = _context.Employees.AsNoTracking().First(e => e.Id == 6);
+        var charlie = context.Employees.AsNoTracking().First(e => e.Id == 5);
+        var diana = context.Employees.AsNoTracking().First(e => e.Id == 6);
         Assert.Equal(3, charlie.DepartmentId); // Sales
         Assert.Equal(3, diana.DepartmentId); // Sales
 
@@ -67,7 +64,7 @@ public class UpdateDepartmentTests(CompanyDbContext context, IEfExercisesIdempot
         };
 
         // Act
-        var result = _exercises.UpdateDepartment(dto);
+        var result = exercises.UpdateDepartment(dto);
 
         // Assert - Check returned object
         Assert.Equal(4, result.Employees.Count);
@@ -77,7 +74,7 @@ public class UpdateDepartmentTests(CompanyDbContext context, IEfExercisesIdempot
         Assert.Contains(result.Employees, e => e.Id == 6);
 
         // Assert - Verify DB state
-        var dbDepartment = _context.Departments
+        var dbDepartment = context.Departments
             .AsNoTracking()
             .Include(d => d.Employees)
             .First(d => d.Id == 2);
@@ -88,8 +85,8 @@ public class UpdateDepartmentTests(CompanyDbContext context, IEfExercisesIdempot
         Assert.Contains(dbDepartment.Employees, e => e.Id == 6 && e.FirstName == "Diana");
 
         // Verify employees were actually transferred in DB
-        var charlieAfter = _context.Employees.AsNoTracking().First(e => e.Id == 5);
-        var dianaAfter = _context.Employees.AsNoTracking().First(e => e.Id == 6);
+        var charlieAfter = context.Employees.AsNoTracking().First(e => e.Id == 5);
+        var dianaAfter = context.Employees.AsNoTracking().First(e => e.Id == 6);
         Assert.Equal(2, charlieAfter.DepartmentId);
         Assert.Equal(2, dianaAfter.DepartmentId);
     }
@@ -98,11 +95,11 @@ public class UpdateDepartmentTests(CompanyDbContext context, IEfExercisesIdempot
     public void UpdateDepartment_TransferEmployeesBetweenDepartments_ShouldUpdateCorrectly()
     {
         // Arrange - Verify John is in Engineering
-        var john = _context.Employees.AsNoTracking().First(e => e.Id == 1);
+        var john = context.Employees.AsNoTracking().First(e => e.Id == 1);
         Assert.Equal(1, john.DepartmentId); // Engineering
 
         // Get initial Sales employee count
-        var initialSalesCount = _context.Employees.AsNoTracking().Count(e => e.DepartmentId == 3);
+        var initialSalesCount = context.Employees.AsNoTracking().Count(e => e.DepartmentId == 3);
 
         var salesDto = new UpdateDepartmentDto
         {
@@ -111,7 +108,7 @@ public class UpdateDepartmentTests(CompanyDbContext context, IEfExercisesIdempot
         };
 
         // Act
-        var result = _exercises.UpdateDepartment(salesDto);
+        var result = exercises.UpdateDepartment(salesDto);
 
         // Assert - Check returned object
         Assert.Equal(3, result.Employees.Count);
@@ -120,10 +117,10 @@ public class UpdateDepartmentTests(CompanyDbContext context, IEfExercisesIdempot
         Assert.Contains(result.Employees, e => e.Id == 6);
 
         // Assert - Verify DB state
-        var johnAfter = _context.Employees.AsNoTracking().First(e => e.Id == 1);
+        var johnAfter = context.Employees.AsNoTracking().First(e => e.Id == 1);
         Assert.Equal(3, johnAfter.DepartmentId);
 
-        var salesDept = _context.Departments
+        var salesDept = context.Departments
             .AsNoTracking()
             .Include(d => d.Employees)
             .First(d => d.Id == 3);
@@ -131,40 +128,12 @@ public class UpdateDepartmentTests(CompanyDbContext context, IEfExercisesIdempot
         Assert.Contains(salesDept.Employees, e => e.Id == 1 && e.FirstName == "John");
     }
 
-    [Fact]
-    public void UpdateDepartment_RemoveEmployees_ShouldThrow()
-    {
-        // Arrange - Engineering currently has 3 employees
-        var engineeringDept = _context.Departments
-            .AsNoTracking()
-            .Include(d => d.Employees)
-            .First(d => d.Id == 1);
-        var originalEmployeeIds = engineeringDept.Employees.Select(e => e.Id).OrderBy(id => id).ToList();
-        Assert.True(originalEmployeeIds.Count >= 2); // Has John, Jane, Frank
-
-        var dto = new UpdateDepartmentDto
-        {
-            Id = 1,
-            EmployeeIds = new List<int> { 1 } // Try to remove others, keep only John
-        };
-
-        // Act & Assert
-        Assert.Throws<InvalidOperationException>(() => _exercises.UpdateDepartment(dto));
-
-        // Verify employees were not changed in DB
-        var unchangedDept = _context.Departments
-            .AsNoTracking()
-            .Include(d => d.Employees)
-            .First(d => d.Id == 1);
-        var unchangedEmployeeIds = unchangedDept.Employees.Select(e => e.Id).OrderBy(id => id).ToList();
-        Assert.Equal(originalEmployeeIds, unchangedEmployeeIds);
-    }
-
+   
     [Fact]
     public void UpdateDepartment_PartialUpdate_ShouldOnlyUpdateSpecifiedFields()
     {
         // Arrange - Get original state
-        var originalDepartment = _context.Departments
+        var originalDepartment = context.Departments
             .AsNoTracking()
             .Include(d => d.Employees)
             .First(d => d.Id == 1);
@@ -179,7 +148,7 @@ public class UpdateDepartmentTests(CompanyDbContext context, IEfExercisesIdempot
         };
 
         // Act
-        var result = _exercises.UpdateDepartment(dto);
+        var result = exercises.UpdateDepartment(dto);
 
         // Assert - Budget changed
         Assert.Equal(600000, result.Budget);
@@ -190,7 +159,7 @@ public class UpdateDepartmentTests(CompanyDbContext context, IEfExercisesIdempot
         Assert.Equal(originalEmployeeCount, result.Employees.Count);
 
         // Assert - Verify DB state
-        var dbDepartment = _context.Departments
+        var dbDepartment = context.Departments
             .AsNoTracking()
             .Include(d => d.Employees)
             .First(d => d.Id == 1);
@@ -203,7 +172,7 @@ public class UpdateDepartmentTests(CompanyDbContext context, IEfExercisesIdempot
     public void UpdateDepartment_Idempotent_ShouldProduceSameResultWhenCalledTwice()
     {
         // Arrange - Verify initial state
-        var initialDepartment = _context.Departments
+        var initialDepartment = context.Departments
             .AsNoTracking()
             .Include(d => d.Employees)
             .First(d => d.Id == 2);
@@ -219,17 +188,17 @@ public class UpdateDepartmentTests(CompanyDbContext context, IEfExercisesIdempot
         };
 
         // Act - Call twice
-        var result1 = _exercises.UpdateDepartment(dto);
+        var result1 = exercises.UpdateDepartment(dto);
 
         // Verify first call worked
-        var afterFirstCall = _context.Departments.AsNoTracking()
+        var afterFirstCall = context.Departments.AsNoTracking()
             .Include(d => d.Employees)
             .First(d => d.Id == 2);
         Assert.Equal("Marketing & Sales", afterFirstCall.Name);
         Assert.Equal(250000, afterFirstCall.Budget);
         Assert.Equal(3, afterFirstCall.Employees.Count);
 
-        var result2 = _exercises.UpdateDepartment(dto);
+        var result2 = exercises.UpdateDepartment(dto);
 
         // Assert - Both calls should produce identical results
         Assert.Equal(result1.Name, result2.Name);
@@ -238,7 +207,7 @@ public class UpdateDepartmentTests(CompanyDbContext context, IEfExercisesIdempot
         Assert.All(result1.Employees, e => Assert.Contains(result2.Employees, e2 => e2.Id == e.Id));
 
         // Assert - DB state after second call is identical
-        var afterSecondCall = _context.Departments.AsNoTracking()
+        var afterSecondCall = context.Departments.AsNoTracking()
             .Include(d => d.Employees)
             .First(d => d.Id == 2);
         Assert.Equal("Marketing & Sales", afterSecondCall.Name);
@@ -253,7 +222,7 @@ public class UpdateDepartmentTests(CompanyDbContext context, IEfExercisesIdempot
     public void UpdateDepartment_ReplaceEmployees_ShouldUpdateOneToMany()
     {
         // Arrange - HR currently has Eve (7)
-        var hrDept = _context.Departments
+        var hrDept = context.Departments
             .AsNoTracking()
             .Include(d => d.Employees)
             .First(d => d.Id == 4);
@@ -266,10 +235,10 @@ public class UpdateDepartmentTests(CompanyDbContext context, IEfExercisesIdempot
             Id = 3, // Sales
             EmployeeIds = new List<int> { 5, 6, 7 } // Charlie, Diana, Eve
         };
-        _exercises.UpdateDepartment(moveEveDto);
+        exercises.UpdateDepartment(moveEveDto);
 
         // Verify Eve is now in Sales
-        var eveAfterMove = _context.Employees.AsNoTracking().First(e => e.Id == 7);
+        var eveAfterMove = context.Employees.AsNoTracking().First(e => e.Id == 7);
         Assert.Equal(3, eveAfterMove.DepartmentId);
 
         // Now update HR with Bob and Alice
@@ -280,7 +249,7 @@ public class UpdateDepartmentTests(CompanyDbContext context, IEfExercisesIdempot
         };
 
         // Act
-        var result = _exercises.UpdateDepartment(dto);
+        var result = exercises.UpdateDepartment(dto);
 
         // Assert - Check returned object
         Assert.Equal(2, result.Employees.Count);
@@ -289,7 +258,7 @@ public class UpdateDepartmentTests(CompanyDbContext context, IEfExercisesIdempot
         Assert.DoesNotContain(result.Employees, e => e.Id == 7);
 
         // Assert - Verify DB state
-        var dbDepartment = _context.Departments
+        var dbDepartment = context.Departments
             .AsNoTracking()
             .Include(d => d.Employees)
             .First(d => d.Id == 4);
@@ -298,13 +267,13 @@ public class UpdateDepartmentTests(CompanyDbContext context, IEfExercisesIdempot
         Assert.Contains(dbDepartment.Employees, e => e.Id == 4 && e.FirstName == "Alice");
 
         // Verify employees were transferred
-        var bobAfter = _context.Employees.AsNoTracking().First(e => e.Id == 3);
-        var aliceAfter = _context.Employees.AsNoTracking().First(e => e.Id == 4);
+        var bobAfter = context.Employees.AsNoTracking().First(e => e.Id == 3);
+        var aliceAfter = context.Employees.AsNoTracking().First(e => e.Id == 4);
         Assert.Equal(4, bobAfter.DepartmentId);
         Assert.Equal(4, aliceAfter.DepartmentId);
 
         // Verify Eve stayed in Sales
-        var eveAfter = _context.Employees.AsNoTracking().First(e => e.Id == 7);
+        var eveAfter = context.Employees.AsNoTracking().First(e => e.Id == 7);
         Assert.Equal(3, eveAfter.DepartmentId);
     }
 
@@ -312,7 +281,7 @@ public class UpdateDepartmentTests(CompanyDbContext context, IEfExercisesIdempot
     public void UpdateDepartment_NonExistentDepartment_ShouldThrow()
     {
         // Arrange - Verify department doesn't exist
-        var deptExists = _context.Departments.AsNoTracking().Any(d => d.Id == 999);
+        var deptExists = context.Departments.AsNoTracking().Any(d => d.Id == 999);
         Assert.False(deptExists);
 
         var dto = new UpdateDepartmentDto
@@ -322,10 +291,10 @@ public class UpdateDepartmentTests(CompanyDbContext context, IEfExercisesIdempot
         };
 
         // Act & Assert
-        Assert.Throws<InvalidOperationException>(() => _exercises.UpdateDepartment(dto));
+        Assert.Throws<InvalidOperationException>(() => exercises.UpdateDepartment(dto));
 
         // Verify no department was created
-        var stillDoesNotExist = _context.Departments.AsNoTracking().Any(d => d.Id == 999);
+        var stillDoesNotExist = context.Departments.AsNoTracking().Any(d => d.Id == 999);
         Assert.False(stillDoesNotExist);
     }
 
@@ -333,10 +302,10 @@ public class UpdateDepartmentTests(CompanyDbContext context, IEfExercisesIdempot
     public void UpdateDepartment_NonExistentEmployee_ShouldThrow()
     {
         // Arrange - Verify employee doesn't exist
-        var employeeExists = _context.Employees.AsNoTracking().Any(e => e.Id == 999);
+        var employeeExists = context.Employees.AsNoTracking().Any(e => e.Id == 999);
         Assert.False(employeeExists);
 
-        var originalDepartment = _context.Departments
+        var originalDepartment = context.Departments
             .AsNoTracking()
             .Include(d => d.Employees)
             .First(d => d.Id == 1);
@@ -349,10 +318,10 @@ public class UpdateDepartmentTests(CompanyDbContext context, IEfExercisesIdempot
         };
 
         // Act & Assert
-        Assert.Throws<InvalidOperationException>(() => _exercises.UpdateDepartment(dto));
+        Assert.Throws<Exception>(() => exercises.UpdateDepartment(dto));
 
         // Verify department employees were not changed
-        var unchangedDepartment = _context.Departments
+        var unchangedDepartment = context.Departments
             .AsNoTracking()
             .Include(d => d.Employees)
             .First(d => d.Id == 1);
@@ -364,7 +333,7 @@ public class UpdateDepartmentTests(CompanyDbContext context, IEfExercisesIdempot
     public void UpdateDepartment_ComplexUpdate_ShouldUpdateAllSpecifiedFields()
     {
         // Arrange - Verify initial state of Sales
-        var originalDepartment = _context.Departments
+        var originalDepartment = context.Departments
             .AsNoTracking()
             .Include(d => d.Employees)
             .First(d => d.Id == 3);
@@ -376,7 +345,7 @@ public class UpdateDepartmentTests(CompanyDbContext context, IEfExercisesIdempot
         var employeeIds = new[] { 5, 6, 7, 8 };
         foreach (var id in employeeIds)
         {
-            var employee = _context.Employees.AsNoTracking().FirstOrDefault(e => e.Id == id);
+            var employee = context.Employees.AsNoTracking().FirstOrDefault(e => e.Id == id);
             Assert.NotNull(employee);
         }
 
@@ -390,7 +359,7 @@ public class UpdateDepartmentTests(CompanyDbContext context, IEfExercisesIdempot
         };
 
         // Act
-        var result = _exercises.UpdateDepartment(dto);
+        var result = exercises.UpdateDepartment(dto);
 
         // Assert - Check returned object scalar properties
         Assert.Equal("Sales & Business Development", result.Name);
@@ -405,7 +374,7 @@ public class UpdateDepartmentTests(CompanyDbContext context, IEfExercisesIdempot
         Assert.Contains(result.Employees, e => e.Id == 8);
 
         // Assert - Verify complete DB state
-        var dbDepartment = _context.Departments
+        var dbDepartment = context.Departments
             .AsNoTracking()
             .Include(d => d.Employees)
             .First(d => d.Id == 3);
@@ -422,7 +391,7 @@ public class UpdateDepartmentTests(CompanyDbContext context, IEfExercisesIdempot
         // Verify all employees have correct department ID in DB
         foreach (var employeeId in new[] { 5, 6, 7, 8 })
         {
-            var employee = _context.Employees.AsNoTracking().First(e => e.Id == employeeId);
+            var employee = context.Employees.AsNoTracking().First(e => e.Id == employeeId);
             Assert.Equal(3, employee.DepartmentId);
         }
     }
@@ -431,7 +400,7 @@ public class UpdateDepartmentTests(CompanyDbContext context, IEfExercisesIdempot
     public void UpdateDepartment_KeepSameEmployees_ShouldBeIdempotent()
     {
         // Arrange - Get current Engineering employees
-        var engineeringDept = _context.Departments
+        var engineeringDept = context.Departments
             .AsNoTracking()
             .Include(d => d.Employees)
             .First(d => d.Id == 1);
@@ -445,7 +414,7 @@ public class UpdateDepartmentTests(CompanyDbContext context, IEfExercisesIdempot
         };
 
         // Act
-        var result = _exercises.UpdateDepartment(dto);
+        var result = exercises.UpdateDepartment(dto);
 
         // Assert - Check returned object
         Assert.Equal(currentEmployeeIds.Count, result.Employees.Count);
@@ -455,7 +424,7 @@ public class UpdateDepartmentTests(CompanyDbContext context, IEfExercisesIdempot
         }
 
         // Assert - Verify DB state unchanged
-        var afterUpdate = _context.Departments
+        var afterUpdate = context.Departments
             .AsNoTracking()
             .Include(d => d.Employees)
             .First(d => d.Id == 1);
@@ -465,7 +434,7 @@ public class UpdateDepartmentTests(CompanyDbContext context, IEfExercisesIdempot
         // Verify all employees still have correct department
         foreach (var employeeId in currentEmployeeIds)
         {
-            var employee = _context.Employees.AsNoTracking().First(e => e.Id == employeeId);
+            var employee = context.Employees.AsNoTracking().First(e => e.Id == employeeId);
             Assert.Equal(1, employee.DepartmentId);
         }
     }

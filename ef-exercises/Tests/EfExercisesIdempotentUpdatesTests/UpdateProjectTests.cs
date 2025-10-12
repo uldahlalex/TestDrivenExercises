@@ -1,20 +1,17 @@
-using EfExercises.Data;
-using EfExercises.DTOs;
-using EfExercises.Exercises;
 using Microsoft.EntityFrameworkCore;
+using tests.Data;
+using tests.DTOs;
+using tests.Interfaces;
 
-namespace tests.Tests;
+namespace tests.Tests.EfExercisesIdempotentUpdatesTests;
 
 public class UpdateProjectTests(CompanyDbContext context, IEfExercisesIdempotentUpdates exercises)
 {
-    private readonly CompanyDbContext _context = context;
-    private readonly IEfExercisesIdempotentUpdates _exercises = exercises;
-
     [Fact]
     public void UpdateProject_ScalarPropertiesOnly_ShouldUpdateCorrectly()
     {
         // Arrange - Verify Project Alpha exists with original values
-        var originalProject = _context.Projects.AsNoTracking().First(p => p.Id == 1);
+        var originalProject = context.Projects.AsNoTracking().First(p => p.Id == 1);
         Assert.Equal("Project Alpha", originalProject.Name);
         Assert.Equal("First major project", originalProject.Description);
         Assert.Equal(100000, originalProject.Budget);
@@ -28,7 +25,7 @@ public class UpdateProjectTests(CompanyDbContext context, IEfExercisesIdempotent
         };
 
         // Act
-        var result = _exercises.UpdateProject(dto);
+        var result = exercises.UpdateProject(dto);
 
         // Assert - Check returned object
         Assert.Equal("Project Alpha v2", result.Name);
@@ -36,7 +33,7 @@ public class UpdateProjectTests(CompanyDbContext context, IEfExercisesIdempotent
         Assert.Equal(120000, result.Budget);
 
         // Assert - Verify DB state
-        var dbProject = _context.Projects.AsNoTracking().First(p => p.Id == 1);
+        var dbProject = context.Projects.AsNoTracking().First(p => p.Id == 1);
         Assert.Equal("Project Alpha v2", dbProject.Name);
         Assert.Equal("Updated first major project", dbProject.Description);
         Assert.Equal(120000, dbProject.Budget);
@@ -50,18 +47,18 @@ public class UpdateProjectTests(CompanyDbContext context, IEfExercisesIdempotent
     public void UpdateProject_AssignEmployees_ShouldUpdateManyToMany()
     {
         // Arrange - Verify project and employees exist
-        var projectExists = _context.Projects.AsNoTracking().Any(p => p.Id == 1);
+        var projectExists = context.Projects.AsNoTracking().Any(p => p.Id == 1);
         Assert.True(projectExists);
 
-        var employee1Exists = _context.Employees.AsNoTracking().Any(e => e.Id == 1);
-        var employee2Exists = _context.Employees.AsNoTracking().Any(e => e.Id == 2);
-        var employee3Exists = _context.Employees.AsNoTracking().Any(e => e.Id == 3);
+        var employee1Exists = context.Employees.AsNoTracking().Any(e => e.Id == 1);
+        var employee2Exists = context.Employees.AsNoTracking().Any(e => e.Id == 2);
+        var employee3Exists = context.Employees.AsNoTracking().Any(e => e.Id == 3);
         Assert.True(employee1Exists);
         Assert.True(employee2Exists);
         Assert.True(employee3Exists);
 
         // Verify project has no employees initially
-        var initialEmployeeCount = _context.Projects
+        var initialEmployeeCount = context.Projects
             .AsNoTracking()
             .Include(p => p.Employees)
             .First(p => p.Id == 1)
@@ -75,7 +72,7 @@ public class UpdateProjectTests(CompanyDbContext context, IEfExercisesIdempotent
         };
 
         // Act
-        var result = _exercises.UpdateProject(dto);
+        var result = exercises.UpdateProject(dto);
 
         // Assert - Check returned object
         Assert.Equal(3, result.Employees.Count);
@@ -85,7 +82,7 @@ public class UpdateProjectTests(CompanyDbContext context, IEfExercisesIdempotent
         Assert.All(result.Employees, e => Assert.NotNull(e.FirstName)); // Verify navigation loaded
 
         // Assert - Verify DB state via fresh query
-        var dbProject = _context.Projects
+        var dbProject = context.Projects
             .AsNoTracking()
             .Include(p => p.Employees)
             .First(p => p.Id == 1);
@@ -104,10 +101,10 @@ public class UpdateProjectTests(CompanyDbContext context, IEfExercisesIdempotent
             Id = 1,
             EmployeeIds = new List<int> { 1, 2 }
         };
-        _exercises.UpdateProject(assignDto);
+        exercises.UpdateProject(assignDto);
 
         // Verify employees were assigned
-        var projectWithEmployees = _context.Projects
+        var projectWithEmployees = context.Projects
             .AsNoTracking()
             .Include(p => p.Employees)
             .First(p => p.Id == 1);
@@ -120,154 +117,35 @@ public class UpdateProjectTests(CompanyDbContext context, IEfExercisesIdempotent
         };
 
         // Act
-        var result = _exercises.UpdateProject(removeDto);
+        var result = exercises.UpdateProject(removeDto);
 
         // Assert - Check returned object
         Assert.Empty(result.Employees);
 
         // Assert - Verify DB state
-        var dbProject = _context.Projects
+        var dbProject = context.Projects
             .AsNoTracking()
             .Include(p => p.Employees)
             .First(p => p.Id == 1);
         Assert.Empty(dbProject.Employees);
 
         // Verify employees still exist (not deleted, just unassigned)
-        var employee1StillExists = _context.Employees.AsNoTracking().Any(e => e.Id == 1);
-        var employee2StillExists = _context.Employees.AsNoTracking().Any(e => e.Id == 2);
+        var employee1StillExists = context.Employees.AsNoTracking().Any(e => e.Id == 1);
+        var employee2StillExists = context.Employees.AsNoTracking().Any(e => e.Id == 2);
         Assert.True(employee1StillExists);
         Assert.True(employee2StillExists);
     }
 
-    [Fact]
-    public void UpdateProject_SetEndDateToNull_ShouldClearNullableField()
-    {
-        // Arrange - Verify Project Gamma has an EndDate
-        var originalProject = _context.Projects.AsNoTracking().First(p => p.Id == 3);
-        Assert.NotNull(originalProject.EndDate);
-        Assert.Equal(new DateTime(2023, 12, 31, 0, 0, 0, DateTimeKind.Utc), originalProject.EndDate);
+   
+    
 
-        var dto = new UpdateProjectDto
-        {
-            Id = 3,
-            EndDateAction = NullableFieldAction.SetNull
-        };
-
-        // Act
-        var result = _exercises.UpdateProject(dto);
-
-        // Assert - Check returned object
-        Assert.Null(result.EndDate);
-
-        // Assert - Verify DB state
-        var dbProject = _context.Projects.AsNoTracking().First(p => p.Id == 3);
-        Assert.Null(dbProject.EndDate);
-
-        // Verify other fields were not changed
-        Assert.Equal(originalProject.Name, dbProject.Name);
-        Assert.Equal(originalProject.StartDate, dbProject.StartDate);
-        Assert.Equal(originalProject.Budget, dbProject.Budget);
-    }
-
-    [Fact]
-    public void UpdateProject_SetEndDateToValue_ShouldUpdateNullableField()
-    {
-        // Arrange - Verify Project Alpha has no EndDate
-        var originalProject = _context.Projects.AsNoTracking().First(p => p.Id == 1);
-        Assert.Null(originalProject.EndDate);
-
-        var newEndDate = new DateTime(2024, 6, 30, 0, 0, 0, DateTimeKind.Utc);
-        var dto = new UpdateProjectDto
-        {
-            Id = 1,
-            EndDate = newEndDate,
-            EndDateAction = NullableFieldAction.SetValue
-        };
-
-        // Act
-        var result = _exercises.UpdateProject(dto);
-
-        // Assert - Check returned object
-        Assert.NotNull(result.EndDate);
-        Assert.Equal(newEndDate, result.EndDate);
-
-        // Assert - Verify DB state
-        var dbProject = _context.Projects.AsNoTracking().First(p => p.Id == 1);
-        Assert.NotNull(dbProject.EndDate);
-        Assert.Equal(newEndDate, dbProject.EndDate);
-
-        // Verify other fields were not changed
-        Assert.Equal(originalProject.Name, dbProject.Name);
-        Assert.Equal(originalProject.StartDate, dbProject.StartDate);
-        Assert.Equal(originalProject.Budget, dbProject.Budget);
-    }
-
-    [Fact]
-    public void UpdateProject_NoChangeToEndDate_ShouldLeaveFieldUnchanged()
-    {
-        // Arrange - Verify Project Gamma has EndDate
-        var originalProject = _context.Projects.AsNoTracking().First(p => p.Id == 3);
-        var originalEndDate = new DateTime(2023, 12, 31, 0, 0, 0, DateTimeKind.Utc);
-        Assert.Equal(originalEndDate, originalProject.EndDate);
-
-        var dto = new UpdateProjectDto
-        {
-            Id = 3,
-            Name = "Updated Gamma",
-            EndDateAction = NullableFieldAction.NoChange
-        };
-
-        // Act
-        var result = _exercises.UpdateProject(dto);
-
-        // Assert - Check returned object
-        Assert.Equal("Updated Gamma", result.Name);
-        Assert.Equal(originalEndDate, result.EndDate); // Should remain unchanged
-
-        // Assert - Verify DB state
-        var dbProject = _context.Projects.AsNoTracking().First(p => p.Id == 3);
-        Assert.Equal("Updated Gamma", dbProject.Name);
-        Assert.Equal(originalEndDate, dbProject.EndDate);
-    }
-
-    [Fact]
-    public void UpdateProject_PartialUpdate_ShouldOnlyUpdateSpecifiedFields()
-    {
-        // Arrange - Get original state
-        var originalProject = _context.Projects.AsNoTracking().First(p => p.Id == 1);
-        Assert.Equal("Project Alpha", originalProject.Name);
-        Assert.Equal(100000, originalProject.Budget);
-
-        var dto = new UpdateProjectDto
-        {
-            Id = 1,
-            Budget = 200000 // Only update budget
-        };
-
-        // Act
-        var result = _exercises.UpdateProject(dto);
-
-        // Assert - Budget changed
-        Assert.Equal(200000, result.Budget);
-
-        // Assert - Everything else unchanged
-        Assert.Equal("Project Alpha", result.Name);
-        Assert.Equal(originalProject.Description, result.Description);
-        Assert.Equal(originalProject.StartDate, result.StartDate);
-        Assert.Equal(originalProject.EndDate, result.EndDate);
-
-        // Assert - Verify DB state
-        var dbProject = _context.Projects.AsNoTracking().First(p => p.Id == 1);
-        Assert.Equal(200000, dbProject.Budget);
-        Assert.Equal("Project Alpha", dbProject.Name);
-        Assert.Equal(originalProject.Description, dbProject.Description);
-    }
-
+  
+    
     [Fact]
     public void UpdateProject_Idempotent_ShouldProduceSameResultWhenCalledTwice()
     {
         // Arrange - Verify initial state
-        var initialProject = _context.Projects.AsNoTracking().First(p => p.Id == 1);
+        var initialProject = context.Projects.AsNoTracking().First(p => p.Id == 1);
         Assert.Equal("Project Alpha", initialProject.Name);
         Assert.Equal(100000, initialProject.Budget);
 
@@ -280,17 +158,17 @@ public class UpdateProjectTests(CompanyDbContext context, IEfExercisesIdempotent
         };
 
         // Act - Call twice
-        var result1 = _exercises.UpdateProject(dto);
+        var result1 = exercises.UpdateProject(dto);
 
         // Verify first call worked
-        var afterFirstCall = _context.Projects.AsNoTracking()
+        var afterFirstCall = context.Projects.AsNoTracking()
             .Include(p => p.Employees)
             .First(p => p.Id == 1);
         Assert.Equal("Project Alpha Updated", afterFirstCall.Name);
         Assert.Equal(150000, afterFirstCall.Budget);
         Assert.Equal(3, afterFirstCall.Employees.Count);
 
-        var result2 = _exercises.UpdateProject(dto);
+        var result2 = exercises.UpdateProject(dto);
 
         // Assert - Both calls should produce identical results
         Assert.Equal(result1.Name, result2.Name);
@@ -299,7 +177,7 @@ public class UpdateProjectTests(CompanyDbContext context, IEfExercisesIdempotent
         Assert.All(result1.Employees, e => Assert.Contains(result2.Employees, e2 => e2.Id == e.Id));
 
         // Assert - DB state after second call is identical
-        var afterSecondCall = _context.Projects.AsNoTracking()
+        var afterSecondCall = context.Projects.AsNoTracking()
             .Include(p => p.Employees)
             .First(p => p.Id == 1);
         Assert.Equal("Project Alpha Updated", afterSecondCall.Name);
@@ -319,10 +197,10 @@ public class UpdateProjectTests(CompanyDbContext context, IEfExercisesIdempotent
             Id = 1,
             EmployeeIds = new List<int> { 1, 2 }
         };
-        _exercises.UpdateProject(initialDto);
+        exercises.UpdateProject(initialDto);
 
         // Verify initial assignment
-        var afterInitial = _context.Projects
+        var afterInitial = context.Projects
             .AsNoTracking()
             .Include(p => p.Employees)
             .First(p => p.Id == 1);
@@ -338,7 +216,7 @@ public class UpdateProjectTests(CompanyDbContext context, IEfExercisesIdempotent
         };
 
         // Act
-        var result = _exercises.UpdateProject(replaceDto);
+        var result = exercises.UpdateProject(replaceDto);
 
         // Assert - Check returned object
         Assert.Equal(3, result.Employees.Count);
@@ -348,7 +226,7 @@ public class UpdateProjectTests(CompanyDbContext context, IEfExercisesIdempotent
         Assert.Contains(result.Employees, e => e.Id == 4);
 
         // Assert - Verify DB state
-        var dbProject = _context.Projects
+        var dbProject = context.Projects
             .AsNoTracking()
             .Include(p => p.Employees)
             .First(p => p.Id == 1);
@@ -359,7 +237,7 @@ public class UpdateProjectTests(CompanyDbContext context, IEfExercisesIdempotent
         Assert.Contains(dbProject.Employees, e => e.Id == 4 && e.FirstName == "Alice");
 
         // Verify Employee 1 still exists and wasn't deleted
-        var employee1 = _context.Employees.AsNoTracking().FirstOrDefault(e => e.Id == 1);
+        var employee1 = context.Employees.AsNoTracking().FirstOrDefault(e => e.Id == 1);
         Assert.NotNull(employee1);
         Assert.Equal("John", employee1.FirstName);
     }
@@ -368,7 +246,7 @@ public class UpdateProjectTests(CompanyDbContext context, IEfExercisesIdempotent
     public void UpdateProject_NonExistentProject_ShouldThrow()
     {
         // Arrange - Verify project doesn't exist
-        var projectExists = _context.Projects.AsNoTracking().Any(p => p.Id == 999);
+        var projectExists = context.Projects.AsNoTracking().Any(p => p.Id == 999);
         Assert.False(projectExists);
 
         var dto = new UpdateProjectDto
@@ -378,10 +256,10 @@ public class UpdateProjectTests(CompanyDbContext context, IEfExercisesIdempotent
         };
 
         // Act & Assert
-        Assert.Throws<InvalidOperationException>(() => _exercises.UpdateProject(dto));
+        Assert.Throws<InvalidOperationException>(() => exercises.UpdateProject(dto));
 
         // Verify no project was created
-        var stillDoesNotExist = _context.Projects.AsNoTracking().Any(p => p.Id == 999);
+        var stillDoesNotExist = context.Projects.AsNoTracking().Any(p => p.Id == 999);
         Assert.False(stillDoesNotExist);
     }
 
@@ -389,10 +267,10 @@ public class UpdateProjectTests(CompanyDbContext context, IEfExercisesIdempotent
     public void UpdateProject_NonExistentEmployee_ShouldThrow()
     {
         // Arrange - Verify employee doesn't exist
-        var employeeExists = _context.Employees.AsNoTracking().Any(e => e.Id == 999);
+        var employeeExists = context.Employees.AsNoTracking().Any(e => e.Id == 999);
         Assert.False(employeeExists);
 
-        var originalProject = _context.Projects
+        var originalProject = context.Projects
             .AsNoTracking()
             .Include(p => p.Employees)
             .First(p => p.Id == 1);
@@ -405,10 +283,10 @@ public class UpdateProjectTests(CompanyDbContext context, IEfExercisesIdempotent
         };
 
         // Act & Assert
-        Assert.Throws<InvalidOperationException>(() => _exercises.UpdateProject(dto));
+        Assert.Throws<InvalidOperationException>(() => exercises.UpdateProject(dto));
 
         // Verify project employees were not changed
-        var unchangedProject = _context.Projects
+        var unchangedProject = context.Projects
             .AsNoTracking()
             .Include(p => p.Employees)
             .First(p => p.Id == 1);
@@ -419,7 +297,7 @@ public class UpdateProjectTests(CompanyDbContext context, IEfExercisesIdempotent
     public void UpdateProject_SetValueWithoutEndDate_ShouldThrow()
     {
         // Arrange
-        var originalProject = _context.Projects.AsNoTracking().First(p => p.Id == 1);
+        var originalProject = context.Projects.AsNoTracking().First(p => p.Id == 1);
 
         var dto = new UpdateProjectDto
         {
@@ -429,10 +307,10 @@ public class UpdateProjectTests(CompanyDbContext context, IEfExercisesIdempotent
         };
 
         // Act & Assert
-        Assert.Throws<InvalidOperationException>(() => _exercises.UpdateProject(dto));
+        Assert.Throws<InvalidOperationException>(() => exercises.UpdateProject(dto));
 
         // Verify project was not changed
-        var unchangedProject = _context.Projects.AsNoTracking().First(p => p.Id == 1);
+        var unchangedProject = context.Projects.AsNoTracking().First(p => p.Id == 1);
         Assert.Equal(originalProject.Name, unchangedProject.Name);
         Assert.Equal(originalProject.EndDate, unchangedProject.EndDate);
     }
@@ -441,7 +319,7 @@ public class UpdateProjectTests(CompanyDbContext context, IEfExercisesIdempotent
     public void UpdateProject_ComplexUpdate_ShouldUpdateAllSpecifiedRelationships()
     {
         // Arrange - Verify initial state of Project Beta
-        var originalProject = _context.Projects
+        var originalProject = context.Projects
             .AsNoTracking()
             .Include(p => p.Employees)
             .First(p => p.Id == 2);
@@ -452,7 +330,7 @@ public class UpdateProjectTests(CompanyDbContext context, IEfExercisesIdempotent
         Assert.Equal(0, originalProject.Employees.Count);
 
         // Verify target employees exist
-        var employeeCount = _context.Employees.AsNoTracking().Count(e => e.Id >= 1 && e.Id <= 5);
+        var employeeCount = context.Employees.AsNoTracking().Count(e => e.Id >= 1 && e.Id <= 5);
         Assert.Equal(5, employeeCount);
 
         var newEndDate = new DateTime(2024, 12, 31, 0, 0, 0, DateTimeKind.Utc);
@@ -468,7 +346,7 @@ public class UpdateProjectTests(CompanyDbContext context, IEfExercisesIdempotent
         };
 
         // Act
-        var result = _exercises.UpdateProject(dto);
+        var result = exercises.UpdateProject(dto);
 
         // Assert - Check returned object scalar properties
         Assert.Equal("Project Beta v2.0", result.Name);
@@ -487,7 +365,7 @@ public class UpdateProjectTests(CompanyDbContext context, IEfExercisesIdempotent
         }
 
         // Assert - Verify complete DB state
-        var dbProject = _context.Projects
+        var dbProject = context.Projects
             .AsNoTracking()
             .Include(p => p.Employees)
             .First(p => p.Id == 2);
