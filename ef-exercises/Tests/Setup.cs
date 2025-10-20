@@ -1,7 +1,10 @@
+using System.ComponentModel.DataAnnotations;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Testcontainers.PostgreSql;
 using tests.Data;
+using tests.DTOs;
+using tests.Entities;
 using tests.Exercises;
 using tests.Interfaces;
 
@@ -27,5 +30,6 @@ public class Startup
         });
         services.AddScoped<IEfExercises, EfExercises>();
         services.AddScoped<IEfExercisesIdempotentUpdates, EfExercisesIdempotentUpdates>();
+        services.AddScoped<IEfExercisesSoftDeletes, EfExercisesSoftDeletes>();
     }
 }

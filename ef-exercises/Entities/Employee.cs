@@ -11,4 +11,8 @@ public class Employee
     public int DepartmentId { get; set; }
     public Department Department { get; set; } = null!;
     public ICollection<Project> Projects { get; set; } = new List<Project>();
+
+    // Soft delete properties
+    public bool IsDeleted { get; set; }
+    public DateTime? DeletedAt { get; set; }
 }

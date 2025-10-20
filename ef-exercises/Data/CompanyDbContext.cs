@@ -26,6 +26,9 @@ public class CompanyDbContext : DbContext
             entity.HasOne(e => e.Department)
                   .WithMany(d => d.Employees)
                   .HasForeignKey(e => e.DepartmentId);
+
+            // Global query filter for soft deletes
+            entity.HasQueryFilter(e => !e.IsDeleted);
         });
 
         // Configure Department entity
@@ -35,6 +38,9 @@ public class CompanyDbContext : DbContext
             entity.Property(d => d.Name).IsRequired().HasMaxLength(100);
             entity.Property(d => d.Location).IsRequired().HasMaxLength(100);
             entity.Property(d => d.Budget).HasColumnType("real");
+
+            // Global query filter for soft deletes
+            entity.HasQueryFilter(d => !d.IsDeleted);
         });
 
         // Configure Project entity
@@ -44,6 +50,9 @@ public class CompanyDbContext : DbContext
             entity.Property(p => p.Name).IsRequired().HasMaxLength(100);
             entity.Property(p => p.Description).HasMaxLength(500);
             entity.Property(p => p.Budget).HasColumnType("real");
+
+            // Global query filter for soft deletes
+            entity.HasQueryFilter(p => !p.IsDeleted);
         });
 
         // Configure many-to-many relationship between Employee and Project

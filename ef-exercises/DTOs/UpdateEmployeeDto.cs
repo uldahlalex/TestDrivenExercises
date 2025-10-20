@@ -1,3 +1,6 @@
+using System.ComponentModel.DataAnnotations;
+using System.Diagnostics.CodeAnalysis;
+
 namespace tests.DTOs;
 
 /// <summary>
@@ -10,11 +13,13 @@ public class UpdateEmployeeDto
     /// Required: The unique identifier of the employee to update.
     /// Must reference an existing employee or the update will throw InvalidOperationException.
     /// </summary>
+    [NotNull] [Required]
     public int Id { get; set; }
 
     /// <summary>
     /// The desired first name for this employee.
     /// </summary>
+    [MinLength(1)]
     public string FirstName { get; set; }
 
     /// <summary>
@@ -25,6 +30,7 @@ public class UpdateEmployeeDto
     /// <summary>
     /// The desired email address for this employee.
     /// </summary>
+    [EmailAddress]
     public string Email { get; set; }
 
     /// <summary>

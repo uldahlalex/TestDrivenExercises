@@ -4,7 +4,7 @@ using tests.Entities;
 namespace tests.Interfaces;
 
 /// <summary>
-/// Level 4 - Idempotent Updates with DTOs
+/// Idempotent Updates with DTOs
 /// Focus on proper entity state management and relationship handling
 /// </summary>
 public interface IEfExercisesIdempotentUpdates

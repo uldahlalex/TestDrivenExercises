@@ -7,4 +7,8 @@ public class Department
     public string Location { get; set; } = string.Empty;
     public double Budget { get; set; }
     public ICollection<Employee> Employees { get; set; } = new List<Employee>();
+
+    // Soft delete properties
+    public bool IsDeleted { get; set; }
+    public DateTime? DeletedAt { get; set; }
 }
