@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Xml;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Testcontainers.PostgreSql;
@@ -31,5 +32,8 @@ public class Startup
         services.AddScoped<IEfExercises, EfExercises>();
         services.AddScoped<IEfExercisesIdempotentUpdates, EfExercisesIdempotentUpdates>();
         services.AddScoped<IEfExercisesSoftDeletes, EfExercisesSoftDeletes>();
+        services.AddScoped<IEfExercisesCreateWithBusinessRules, EfExercisesCreateWithBusinessRules>();
     }
+    
 }
+

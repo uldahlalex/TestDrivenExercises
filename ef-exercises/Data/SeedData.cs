@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using tests.Entities;
 
 namespace tests.Data;
@@ -56,5 +57,13 @@ public static class SeedData
 
         context.Projects.AddRange(projects);
         await context.SaveChangesAsync();
+
+        // Reset sequences to avoid PK conflicts
+        await context.Database.ExecuteSqlRawAsync(
+            "SELECT setval(pg_get_serial_sequence('\"Departments\"', 'Id'), COALESCE(MAX(\"Id\"), 1)) FROM \"Departments\"");
+        await context.Database.ExecuteSqlRawAsync(
+            "SELECT setval(pg_get_serial_sequence('\"Employees\"', 'Id'), COALESCE(MAX(\"Id\"), 1)) FROM \"Employees\"");
+        await context.Database.ExecuteSqlRawAsync(
+            "SELECT setval(pg_get_serial_sequence('\"Projects\"', 'Id'), COALESCE(MAX(\"Id\"), 1)) FROM \"Projects\"");
     }
 }
